@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "coconutools"
+version = "0.0.1"
+description = "Modern API for good old MS-COCO datasets"
+authors = ["Roman Glushko <roman.glushko.m@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+
+[tool.poetry.dev-dependencies]
+isort = "^5.10.1"
+black = "^21.12b0"
+flake8 = "^4.0.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
