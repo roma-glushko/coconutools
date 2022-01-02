@@ -1,15 +1,21 @@
 import json
 import warnings
-from dataclasses import InitVar, dataclass
+from contextlib import suppress
+from dataclasses import InitVar, asdict, dataclass
 from datetime import datetime
 from os import PathLike
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
+
+with suppress(ModuleNotFoundError):
+    import pandas
 
 SegmentT = List[float]
 
 
 @dataclass
 class Info:
+    __slots__ = ("year", "version", "description", "contributor", "url", "date_created")
+
     year: Optional[int]
     version: Optional[str]
     description: Optional[str]
@@ -20,12 +26,16 @@ class Info:
 
 @dataclass
 class Category:
+    __slots__ = ("id", "name")
+
     id: int
     name: str
 
 
 @dataclass
 class Image:
+    __slots__ = ("id", "file_name", "width", "height")
+
     id: int
     file_name: str
     width: int
@@ -34,6 +44,17 @@ class Image:
 
 @dataclass
 class Annotation:
+    __slots__ = (
+        "id",
+        "image_id",
+        "category_id",
+        "segmentation",
+        "bbox",
+        "ignore",
+        "iscrowd",
+        "area",
+    )
+
     id: int
     image_id: int
     category_id: int
@@ -112,7 +133,9 @@ class COCO:
         return self.__annotation_index[annotation_id]
 
     def _load_dataset(self) -> None:
-        """ """
+        """
+        Loads a COCO annotation JSON file
+        """
 
         with open(self.annotation_file, "r") as f:
             annotation_file: dict = json.load(f)
@@ -146,6 +169,35 @@ class COCO:
         self._images: List[Image] = images
         self._categories: List[Category] = categories
         self._annotations: List[Annotation] = annotations
+
+    def df(self) -> "pandas.DataFrame":
+        """
+        Convert COCO dataset to pandas.DataFrame
+
+        :return: pandas.DataFrame
+        """
+        try:
+            import pandas as pd
+
+            data: List[Dict[str, Any]] = [
+                {
+                    **asdict(annotation),
+                    "category_name": annotation.category.name,
+                    "image_path": annotation.image.file_name,
+                    "image_width": annotation.image.width,
+                    "image_height": annotation.image.height,
+                }
+                for annotation in self.annotations
+            ]
+
+            return pd.DataFrame(data)
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError(
+                "In order to be able to convert your COCO dataset to DataFrame you need to "
+                "have pandas installed in your project: "
+                "- pip install pandas"
+                "- poetry add pandas"
+            )
 
     def __repr__(self) -> str:
         info = self.info

@@ -12,7 +12,11 @@ class TestDataset:
         [(Fixtures.food_nutritions.value, 6, 6, 5)],
     )
     def test_annotation_loading(
-            self, dataset_path: PathLike, annotation_count: int, image_count: int, category_count: int
+        self,
+        dataset_path: PathLike,
+        annotation_count: int,
+        image_count: int,
+        category_count: int,
     ) -> None:
         dataset = COCO(annotation_file=dataset_path)
 
@@ -24,3 +28,23 @@ class TestDataset:
         dataset = COCO(annotation_file=Fixtures.food_nutritions.value)
 
         assert "COCO(Food Nutrition Values Dataset)" == str(dataset)
+
+    def test_converting_to_dataframe(self):
+        dataset = COCO(annotation_file=Fixtures.food_nutritions.value)
+
+        dataframe = dataset.df()
+
+        assert [
+            "id",
+            "image_id",
+            "category_id",
+            "segmentation",
+            "bbox",
+            "ignore",
+            "iscrowd",
+            "area",
+            "category_name",
+            "image_path",
+            "image_width",
+            "image_height",
+        ] == list(dataframe.columns)
