@@ -1,8 +1,11 @@
 from dataclasses import dataclass
-from typing import List, Tuple, TypedDict, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, TypedDict, Union
 
-from coconutools.dataset import COCO
+from coconutools.exceptions import DatasetNotReferenced
 from coconutools.images import Category, Image
+
+if TYPE_CHECKING:
+    from coconutools.dataset import COCO
 
 
 class UncompressedRLE_T(TypedDict):
@@ -23,7 +26,7 @@ class BBox:
     height: float
 
 
-@dataclass
+@dataclass(init=False)
 class Annotation:
     __slots__ = (
         "id",
@@ -33,6 +36,7 @@ class Annotation:
         "bbox",
         "iscrowd",
         "area",
+        "_dataset",
     )
 
     id: int
@@ -45,9 +49,10 @@ class Annotation:
     bbox: BBox
     area: float
 
+    _dataset: Optional["COCO"]
+
     def __init__(
         self,
-        dataset: "COCO",
         id: int,
         image_id: int,
         category_id: int,
@@ -55,8 +60,9 @@ class Annotation:
         segmentation: Union[List[PoligonT], UncompressedRLE_T, CompressedRLE_T],
         bbox: BBoxT,
         area: float,
+        dataset: Optional["COCO"] = None,
     ) -> None:
-        self._dataset: "COCO" = dataset
+        self._dataset = dataset
 
         self.id = id
         self.image_id = image_id
@@ -69,8 +75,20 @@ class Annotation:
 
     @property
     def image(self) -> Image:
+        if not self._dataset:
+            raise DatasetNotReferenced(
+                "Current annotation has been created outside of any COCO dataset. "
+                "Extended image information is not available"
+            )
+
         return self._dataset._get_image(self.image_id)
 
     @property
     def category(self) -> Category:
+        if not self._dataset:
+            raise DatasetNotReferenced(
+                "Current annotation has been created outside of any COCO dataset. "
+                "Extended category information is not available"
+            )
+
         return self._dataset._get_category(self.category_id)

@@ -3,6 +3,7 @@ from os import PathLike
 import pytest
 
 from coconutools import COCO
+from coconutools.exceptions import DatasetCorrupted
 from tests.fixtures import Fixtures
 
 
@@ -11,7 +12,7 @@ class TestDataset:
         "dataset_path,annotation_count,image_count,category_count",
         [(Fixtures.food_nutritions.value, 6, 6, 5)],
     )
-    def test_annotation_loading(
+    def test_load_annotation(
         self,
         dataset_path: PathLike,
         annotation_count: int,
@@ -23,6 +24,10 @@ class TestDataset:
         assert annotation_count == len(dataset.annotations)
         assert image_count == len(dataset.images)
         assert category_count == len(dataset.categories)
+
+    def test_load_corrupted_annotation(self):
+        with pytest.raises(DatasetCorrupted):
+            COCO(annotation_file=Fixtures.corrupted_annotation)
 
     def test_dataset_repr(self):
         dataset = COCO(annotation_file=Fixtures.food_nutritions.value)

@@ -3,10 +3,12 @@ import warnings
 from contextlib import suppress
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from json import JSONDecodeError
 from os import PathLike
 from typing import Any, Dict, List, Optional, Union
 
 from coconutools.annotations import Annotation
+from coconutools.exceptions import DatasetCorrupted, DatasetFormatNotValid
 from coconutools.images import Category, Image, License
 
 with suppress(ModuleNotFoundError):
@@ -23,9 +25,6 @@ class Info:
     contributor: Optional[str]
     url: Optional[str]
     date_created: Optional[datetime]
-
-
-ItemT = Union[Image, Category, Annotation]
 
 
 class COCO:
@@ -97,10 +96,9 @@ class COCO:
         Loads a COCO annotation JSON file
         """
 
-        with open(self.annotation_file, "r") as f:
-            annotation_file: dict = json.load(f)
-
-        assert type(annotation_file) == dict
+        annotation_file: Dict[str, Any] = self._load_annotation_file(
+            self.annotation_file
+        )
 
         self._images: List[Image] = []
         self._categories: List[Category] = []
@@ -122,7 +120,7 @@ class COCO:
             self._set_licence(licence)
 
         for image_info in annotation_file.get("images", []):
-            image: Image = Image(**image_info)
+            image: Image = Image(**image_info, dataset=self)
 
             self._images.append(image)
             self._set_image(image)
@@ -169,3 +167,29 @@ class COCO:
         info = self.info
 
         return f"COCO({info.description})"
+
+    def _load_annotation_file(self, annotation_file: PathLike) -> Dict[str, Any]:
+        """
+        Loads and validations a COCO annotation JSON file
+
+        :param annotation_file: Path to the annotation file
+        :return: Content of annotation file
+        """
+        try:
+            with open(annotation_file, "r") as f:
+                annotation_file: dict = json.load(f)
+        except JSONDecodeError as e:
+            raise DatasetCorrupted(
+                f"COCO dataset {annotation_file} seems to be corrupted or not a valid JSON file"
+            ) from e
+
+        assert type(annotation_file) == dict
+
+        dataset_properties = set(annotation_file.keys())
+
+        if not {"annotations", "images", "categories"}.issubset(dataset_properties):
+            raise DatasetFormatNotValid(
+                "COCO dataset has to have at least one annotation, image and category"
+            )
+
+        return annotation_file
