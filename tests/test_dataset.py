@@ -1,4 +1,5 @@
 from os import PathLike
+from pathlib import Path
 
 import pytest
 
@@ -27,7 +28,7 @@ class TestDataset:
 
     def test_load_corrupted_annotation(self):
         with pytest.raises(DatasetCorrupted):
-            COCO(annotation_file=Fixtures.corrupted_annotation)
+            COCO(annotation_file=Path(Fixtures.corrupted_annotation))
 
     def test_dataset_repr(self):
         dataset = COCO(annotation_file=Fixtures.food_nutritions.value)
