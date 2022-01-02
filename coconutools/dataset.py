@@ -48,15 +48,15 @@ class COCO:
         self._load_dataset()
 
     @property
-    def info(self) -> Info:
+    def info(self) -> "Info":
         return self._info
 
     @property
-    def annotations(self) -> List[Annotation]:
+    def annotations(self) -> List["Annotation"]:
         return self._annotations
 
     @property
-    def images(self) -> List[Image]:
+    def images(self) -> List["Image"]:
         return self._images
 
     @property
