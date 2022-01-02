@@ -1,4 +1,5 @@
 .idea
 .venv
 .vs_code
+.pytest_cache
 dist
