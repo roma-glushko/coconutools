@@ -19,7 +19,7 @@ class License:
     url: str
 
 
-@dataclass
+@dataclass(init=False)
 class Category:
     """
     Image Category
@@ -30,6 +30,11 @@ class Category:
     id: int
     name: str
     supercategory: Optional[str]
+
+    def __init__(self, id: int, name: str, supercategory: Optional[str] = None) -> None:
+        self.id = id
+        self.name = name
+        self.supercategory = supercategory
 
 
 @dataclass(init=False)

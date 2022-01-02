@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional, Tuple, TypedDict, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, TypedDict, Union, Dict, Any
 
 from coconutools.exceptions import DatasetNotReferenced
 from coconutools.images import Category, Image
@@ -37,6 +37,7 @@ class Annotation:
         "iscrowd",
         "area",
         "_dataset",
+        "extra",
     )
 
     id: int
@@ -48,6 +49,8 @@ class Annotation:
     segmentation: Union[List[PoligonT], UncompressedRLE_T, CompressedRLE_T]
     bbox: BBox
     area: float
+
+    extra: Dict[str, Any]  # any custom nodes go here
 
     _dataset: Optional["COCO"]
 
@@ -61,6 +64,7 @@ class Annotation:
         bbox: BBoxT,
         area: float,
         dataset: Optional["COCO"] = None,
+        **extra: Optional[Dict[str, Any]]
     ) -> None:
         self._dataset = dataset
 
@@ -72,6 +76,8 @@ class Annotation:
 
         self.bbox = BBox(*bbox)
         self.segmentation = segmentation
+
+        self.extra = extra
 
     @property
     def image(self) -> Image:

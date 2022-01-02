@@ -40,7 +40,7 @@ class COCO:
     __license_index: Dict[int, License] = {}
 
     def __init__(
-        self, annotation_file: PathLike, image_dir: Optional[PathLike] = None
+            self, annotation_file: PathLike, image_dir: Optional[PathLike] = None
     ) -> None:
         self.annotation_file = annotation_file
         self.image_dir = image_dir
@@ -143,16 +143,22 @@ class COCO:
         try:
             import pandas as pd
 
-            data: List[Dict[str, Any]] = [
-                {
-                    **asdict(annotation),
+            data: List[Dict[str, Any]] = []
+
+            for annotation in self.annotations:
+                annotation_dict: Dict[str, Any] = asdict(annotation)
+                extra_properties = annotation_dict.pop("extra", {})
+
+                del annotation_dict["_dataset"]  # TODO: make this logic on the item class level
+
+                data.append({
+                    **annotation_dict,
+                    **extra_properties,
                     "category_name": annotation.category.name,
                     "image_path": annotation.image.file_name,
                     "image_width": annotation.image.width,
                     "image_height": annotation.image.height,
-                }
-                for annotation in self.annotations
-            ]
+                })
 
             return pd.DataFrame(data)
         except ModuleNotFoundError:
@@ -166,7 +172,7 @@ class COCO:
     def __repr__(self) -> str:
         info = self.info
 
-        return f"COCO({info.description})"
+        return f"COCO('{info.description}' v{info.version} [{info.contributor}])"
 
     def _load_annotation_file(self, annotation_file: PathLike) -> Dict[str, Any]:
         """
