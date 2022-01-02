@@ -1,4 +1,4 @@
-# COCONuTools
+# coconutools
 
 🥥 Modern API for good old MS-COCO datasets.
 
