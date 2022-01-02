@@ -174,7 +174,7 @@ class COCO:
 
         return f"COCO('{info.description}' v{info.version} [{info.contributor}])"
 
-    def _load_annotation_file(self, annotation_file: PathLike) -> Dict[str, Any]:
+    def _load_annotation_file(self, annotation_path: PathLike) -> Dict[str, Any]:
         """
         Loads and validations a COCO annotation JSON file
 
@@ -182,11 +182,10 @@ class COCO:
         :return: Content of annotation file
         """
         try:
-            with open(annotation_file, "r") as f:
-                annotation_file: dict = json.load(f)
+            annotation_file: dict = json.load(open(annotation_path, "r"))
         except JSONDecodeError as e:
             raise DatasetCorrupted(
-                f"COCO dataset {annotation_file} seems to be corrupted or not a valid JSON file"
+                f"COCO dataset {annotation_path} seems to be corrupted or not a valid JSON file"
             ) from e
 
         assert type(annotation_file) == dict

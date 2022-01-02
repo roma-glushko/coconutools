@@ -71,8 +71,8 @@ class Image:
         date_captured: Optional[datetime] = None,
         license: Optional[int] = None,
         dataset: Optional["COCO"] = None,
-    ):
-        self._dataset: "COCO" = dataset
+    ) -> None:
+        self._dataset: Optional["COCO"] = dataset
 
         self.id = id
         self.file_name = file_name
