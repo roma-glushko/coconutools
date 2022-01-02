@@ -18,7 +18,6 @@ class TestAnnotations:
                     "id": 0,
                     "image_id": 0,
                     "category_id": 3,
-                    "ignore": 0,
                     "iscrowd": 0,
                     "area": 3283691.2497,
                 },
@@ -37,7 +36,6 @@ class TestAnnotations:
         assert expected_annotation.get("id") == annotation.id
         assert expected_annotation.get("image_id") == annotation.image_id
         assert expected_annotation.get("category_id") == annotation.category_id
-        assert expected_annotation.get("ignore") == annotation.ignore
         assert expected_annotation.get("iscrowd") == annotation.iscrowd
         assert expected_annotation.get("area") == approx(annotation.area, 2)
 
