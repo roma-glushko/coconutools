@@ -33,7 +33,9 @@ class TestDataset:
     def test_dataset_repr(self):
         dataset = COCO(annotation_file=Fixtures.food_nutritions.value)
 
-        assert "COCO('Food Nutrition Values Dataset' v1.0 [Label Studio])" == str(dataset)
+        assert "COCO('Food Nutrition Values Dataset' v1.0 [Label Studio])" == str(
+            dataset
+        )
 
     def test_converting_to_dataframe(self):
         dataset = COCO(annotation_file=Fixtures.food_nutritions.value)

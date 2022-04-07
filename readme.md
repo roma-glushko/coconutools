@@ -1,6 +1,6 @@
 # coconutools
 
-🥥 Modern API for good old MS-COCO datasets.
+🥥 Modern API for [good old MS-COCO datasets](https://cocodataset.org/#format-data).
 
 Features:
 
