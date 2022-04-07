@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from json import JSONDecodeError
 from os import PathLike
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from coconutools.annotations import Annotation
 from coconutools.exceptions import DatasetCorrupted, DatasetFormatNotValid
@@ -40,7 +40,7 @@ class COCO:
     __license_index: Dict[int, License] = {}
 
     def __init__(
-            self, annotation_file: PathLike, image_dir: Optional[PathLike] = None
+        self, annotation_file: PathLike, image_dir: Optional[PathLike] = None
     ) -> None:
         self.annotation_file = annotation_file
         self.image_dir = image_dir
@@ -149,16 +149,20 @@ class COCO:
                 annotation_dict: Dict[str, Any] = asdict(annotation)
                 extra_properties = annotation_dict.pop("extra", {})
 
-                del annotation_dict["_dataset"]  # TODO: make this logic on the item class level
+                del annotation_dict[
+                    "_dataset"
+                ]  # TODO: make this logic on the item class level
 
-                data.append({
-                    **annotation_dict,
-                    **extra_properties,
-                    "category_name": annotation.category.name,
-                    "image_path": annotation.image.file_name,
-                    "image_width": annotation.image.width,
-                    "image_height": annotation.image.height,
-                })
+                data.append(
+                    {
+                        **annotation_dict,
+                        **extra_properties,
+                        "category_name": annotation.category.name,
+                        "image_path": annotation.image.file_name,
+                        "image_width": annotation.image.width,
+                        "image_height": annotation.image.height,
+                    }
+                )
 
             return pd.DataFrame(data)
         except ModuleNotFoundError:

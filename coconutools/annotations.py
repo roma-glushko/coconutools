@@ -1,20 +1,13 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional, Tuple, TypedDict, Union, Dict, Any
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from coconutools.exceptions import DatasetNotReferenced
 from coconutools.images import Category, Image
+from coconutools.segmentations import CompressedRLE_T, PolygonT, UncompressedRLE_T
 
 if TYPE_CHECKING:
     from coconutools.dataset import COCO
 
-
-class UncompressedRLE_T(TypedDict):
-    count: List[float]
-    size: Tuple[float, float]
-
-
-CompressedRLE_T = str
-PoligonT = List[float]
 BBoxT = Tuple[float, float, float, float]
 
 
@@ -46,7 +39,7 @@ class Annotation:
 
     iscrowd: bool
 
-    segmentation: Union[List[PoligonT], UncompressedRLE_T, CompressedRLE_T]
+    segmentation: Union[List[PolygonT], UncompressedRLE_T, CompressedRLE_T]
     bbox: BBox
     area: float
 
@@ -60,7 +53,7 @@ class Annotation:
         image_id: int,
         category_id: int,
         iscrowd: bool,
-        segmentation: Union[List[PoligonT], UncompressedRLE_T, CompressedRLE_T],
+        segmentation: Union[List[PolygonT], UncompressedRLE_T, CompressedRLE_T],
         bbox: BBoxT,
         area: float,
         dataset: Optional["COCO"] = None,
@@ -98,3 +91,11 @@ class Annotation:
             )
 
         return self._dataset._get_category(self.category_id)
+
+    def mask(self):
+        # TODO: convert annotation to the mask
+        pass
+
+    def rle(self):
+        # convert annotation to RLE
+        pass
