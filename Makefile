@@ -2,20 +2,22 @@
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-flake:
-	flake8 ./coconutools ./tests
+PACKAGES?=coconutools tests
 
-isort:
-	isort ./coconutools ./tests
+.venv: pyproject.toml poetry.lock
+	@poetry install
 
-black:
-	black ./coconutools ./tests
+install: ## Install the project
+	@poetry install
 
-mypy:
-	mypy ./coconutools ./tests
+test-lint: ## Run lints in the check mode (useful for CI)
+	@poetry run isort $(PACKAGES) -c
+	@poetry run black --check $(PACKAGES)
+	@poetry run flake8 $(PACKAGES)
+	@poetry run mypy --pretty $(PACKAGES)
 
-lint:  # Lint the source code
-	make isort && make black && make flake  && make mypy
-
-test: # Run tests
-	pytest -vvv ./tests
+lint: ## Lint the source code
+	@poetry run isort $(PACKAGES)
+	@poetry run black $(PACKAGES)
+	@poetry run flake8 $(PACKAGES)
+	@poetry run mypy --pretty $(PACKAGES)
