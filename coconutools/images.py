@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -35,10 +35,7 @@ class Image(BaseModel):
     date_captured: datetime | None
     license_id: int | None
 
-    def __init__(self, database: BaseCOCO, **data: Any) -> None:
-        super().__init__(**data)
-
-        self._dataset = database
+    _dataset: BaseCOCO
 
     @property
     def license(self) -> Optional[License]:

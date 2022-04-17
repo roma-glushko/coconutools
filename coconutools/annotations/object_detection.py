@@ -137,7 +137,7 @@ class ObjectDetectionDataset(BaseCOCO):
     def _load_dataset(self, annotation_file: RawDataset) -> None:
         super()._load_dataset(annotation_file)
 
-        self._load_categories(annotation_file.get("categories", []))
+        self._load_categories(annotation_file.get("categories") or [])
 
     @property
     def annotations(self) -> Generator[ObjDetAnnotation, None, None]:

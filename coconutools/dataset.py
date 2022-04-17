@@ -114,9 +114,9 @@ class BaseCOCO:
         self._images: list[Image] = []
         self._licenses: list[License] = []
 
-        self._info: Info = Info(**annotation_file.get("info", {}))
+        self._info: Info = Info(**(annotation_file.get("info") or {}))
 
-        for license_info in annotation_file.get("licenses", []):
+        for license_info in annotation_file.get("licenses") or []:
             licence: License = License(**license_info)
 
             self._add_licence(licence)
