@@ -1,204 +1,135 @@
+from __future__ import annotations
+
 import json
-import warnings
-from contextlib import suppress
-from dataclasses import asdict, dataclass
 from datetime import datetime
 from json import JSONDecodeError
 from os import PathLike
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional, TypedDict
 
-from coconutools.annotations import Annotation
+from pydantic import BaseModel
+
 from coconutools.exceptions import DatasetCorrupted, DatasetFormatNotValid
-from coconutools.images import Category, Image, License
-
-with suppress(ModuleNotFoundError):
-    import pandas
+from coconutools.images import Image, License
 
 
-@dataclass
-class Info:
+class RawDataset(TypedDict):
+    info: dict[str, Any] | None
+    licenses: list[dict[str, Any]] | None
+    annotations: list[dict[str, Any]]
+    images: list[dict[str, str]]
+    categories: list[dict[str, Any]] | None
+
+
+class Info(BaseModel):
     __slots__ = ("year", "version", "description", "contributor", "url", "date_created")
 
-    year: Optional[int]
-    version: Optional[str]
-    description: Optional[str]
-    contributor: Optional[str]
-    url: Optional[str]
-    date_created: Optional[datetime]
+    year: int | None
+    version: str | None
+    description: str | None
+    contributor: str | None
+    url: str | None
+    date_created: datetime | None
 
 
-class COCO:
+def _load_annotation_file(annotation_path: PathLike) -> RawDataset:
+    """
+    Loads and validations a COCO annotation JSON file
+
+    :param annotation_file (PathLike): Path to the annotation file
+    :return: Content of annotation file
+    """
+    try:
+        annotation_file: RawDataset = json.load(open(annotation_path, "r"))
+    except JSONDecodeError as e:
+        raise DatasetCorrupted(
+            f"COCO dataset {annotation_path} seems to be corrupted or not a valid JSON file"
+        ) from e
+
+    assert type(annotation_file) == dict
+
+    dataset_properties = set(annotation_file.keys())
+
+    if not dataset_properties >= {"annotations", "images"}:
+        raise DatasetFormatNotValid(
+            "COCO dataset should have at least one annotation, image and category"
+        )
+
+    return annotation_file
+
+
+class BaseCOCO:
     """
     COCO Dataset
 
     Description of COCO format: https://cocodataset.org/#format-data
     """
 
-    __image_index: Dict[int, Image] = {}
-    __category_index: Dict[int, Category] = {}
-    __annotation_index: Dict[int, Annotation] = {}
-    __license_index: Dict[int, License] = {}
-
     def __init__(
         self, annotation_file: PathLike, image_dir: Optional[PathLike] = None
     ) -> None:
         self.annotation_file = annotation_file
         self.image_dir = image_dir
+        self._annotations: list[dict[str, str]] = []
 
-        self._load_dataset()
+        self.__image_index: dict[int, Image] = {}
+        self.__license_index: dict[int, License] = {}
+
+        raw_dataset: RawDataset = _load_annotation_file(self.annotation_file)
+
+        self._load_dataset(raw_dataset)
 
     @property
-    def info(self) -> "Info":
+    def info(self) -> Info:
         return self._info
 
     @property
-    def annotations(self) -> List["Annotation"]:
-        return self._annotations
-
-    @property
-    def images(self) -> List["Image"]:
+    def images(self) -> list[Image]:
         return self._images
 
     @property
-    def licences(self) -> List[License]:
+    def licences(self) -> list[License]:
         return self._licenses
 
-    @property
-    def categories(self) -> List[Category]:
-        return self._categories
+    def _add_image(self, image: Image) -> None:
+        self._images.append(image)
 
-    def _set_image(self, image: Image) -> None:
         self.__image_index[image.id] = image
 
     def _get_image(self, image_id: int) -> Image:
         return self.__image_index[image_id]
 
-    def _set_category(self, category: Category) -> None:
-        self.__category_index[category.id] = category
+    def _add_licence(self, license: License) -> None:
+        self._licenses.append(license)
 
-    def _get_category(self, category_id: int) -> Category:
-        return self.__category_index[category_id]
-
-    def _set_licence(self, license: License) -> None:
         self.__license_index[license.id] = license
 
     def _get_licence(self, licence_id: int) -> License:
         return self.__license_index[licence_id]
 
-    def _set_annotation(self, annotation: Annotation) -> None:
-        self.__annotation_index[annotation.id] = annotation
-
-    def _get_annotation(self, annotation_id: int) -> Annotation:
-        return self.__annotation_index[annotation_id]
-
-    def _load_dataset(self) -> None:
+    def _load_dataset(self, annotation_file: RawDataset) -> None:
         """
         Loads a COCO annotation JSON file
         """
 
-        annotation_file: Dict[str, Any] = self._load_annotation_file(
-            self.annotation_file
-        )
+        self._images: list[Image] = []
+        self._licenses: list[License] = []
 
-        self._images: List[Image] = []
-        self._categories: List[Category] = []
-        self._licenses: List[License] = []
-        self._annotations: List[Annotation] = []
+        self._info: Info = Info(**(annotation_file.get("info") or {}))
 
-        self._info: Info = Info(**annotation_file.get("info", {}))
-
-        for category_info in annotation_file.get("categories", []):
-            category: Category = Category(**category_info)
-
-            self._categories.append(category)
-            self._set_category(category)
-
-        for license_info in annotation_file.get("licenses", []):
+        for license_info in annotation_file.get("licenses") or []:
             licence: License = License(**license_info)
 
-            self._licenses.append(licence)
-            self._set_licence(licence)
+            self._add_licence(licence)
 
         for image_info in annotation_file.get("images", []):
             image: Image = Image(**image_info, dataset=self)
 
-            self._images.append(image)
-            self._set_image(image)
-
-        for annotation_info in annotation_file.get("annotations", []):
-            try:
-                annotation: Annotation = Annotation(**annotation_info, dataset=self)
-
-                self._annotations.append(annotation)
-                self._set_annotation(annotation)
-            except TypeError as e:
-                warnings.warn(f"Error during annotations parsing: {str(e)}")
-
-    def df(self) -> "pandas.DataFrame":
-        """
-        Convert COCO dataset to pandas.DataFrame
-
-        :return: pandas.DataFrame
-        """
-        try:
-            import pandas as pd
-
-            data: List[Dict[str, Any]] = []
-
-            for annotation in self.annotations:
-                annotation_dict: Dict[str, Any] = asdict(annotation)
-                extra_properties = annotation_dict.pop("extra", {})
-
-                del annotation_dict[
-                    "_dataset"
-                ]  # TODO: make this logic on the item class level
-
-                data.append(
-                    {
-                        **annotation_dict,
-                        **extra_properties,
-                        "category_name": annotation.category.name,
-                        "image_path": annotation.image.file_name,
-                        "image_width": annotation.image.width,
-                        "image_height": annotation.image.height,
-                    }
-                )
-
-            return pd.DataFrame(data)
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError(
-                "In order to be able to convert your COCO dataset to DataFrame you need to "
-                "have pandas installed in your project: "
-                "- pip install pandas"
-                "- poetry add pandas"
-            )
+            self._add_image(image)
 
     def __repr__(self) -> str:
         info = self.info
 
-        return f"COCO('{info.description}' v{info.version} [{info.contributor}])"
-
-    def _load_annotation_file(self, annotation_path: PathLike) -> Dict[str, Any]:
-        """
-        Loads and validations a COCO annotation JSON file
-
-        :param annotation_file: Path to the annotation file
-        :return: Content of annotation file
-        """
-        try:
-            annotation_file: dict = json.load(open(annotation_path, "r"))
-        except JSONDecodeError as e:
-            raise DatasetCorrupted(
-                f"COCO dataset {annotation_path} seems to be corrupted or not a valid JSON file"
-            ) from e
-
-        assert type(annotation_file) == dict
-
-        dataset_properties = set(annotation_file.keys())
-
-        if not {"annotations", "images", "categories"}.issubset(dataset_properties):
-            raise DatasetFormatNotValid(
-                "COCO dataset has to have at least one annotation, image and category"
-            )
-
-        return annotation_file
+        return (
+            f"{self.__class__.__name__}"
+            f"('{info.description}' v{info.version} [{info.contributor}], images: {len(self._images)})"
+        )

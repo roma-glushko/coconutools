@@ -4,7 +4,7 @@ from typing import Any, Dict
 import pytest
 from pytest import approx
 
-from coconutools import COCO, Annotation, Category, Image
+from coconutools import Image, ObjDetAnnotation, ObjDetCategory, ObjectDetectionDataset
 from tests.fixtures import Fixtures
 
 
@@ -29,9 +29,11 @@ class TestAnnotations:
         dataset_path: PathLike,
         expected_annotation: Dict[str, Any],
     ) -> None:
-        dataset: COCO = COCO(annotation_file=dataset_path)
+        dataset: ObjectDetectionDataset = ObjectDetectionDataset(
+            annotation_file=dataset_path
+        )
 
-        annotation = dataset.annotations[0]
+        annotation = next(dataset.annotations)
 
         assert expected_annotation.get("id") == annotation.id
         assert expected_annotation.get("image_id") == annotation.image_id
@@ -40,18 +42,22 @@ class TestAnnotations:
         assert expected_annotation.get("area") == approx(annotation.area, 2)
 
     def test_category_reference(self):
-        dataset: COCO = COCO(annotation_file=Fixtures.food_nutritions.value)
+        dataset: ObjectDetectionDataset = ObjectDetectionDataset(
+            annotation_file=Fixtures.food_nutritions.value
+        )
 
-        annotation: Annotation = dataset.annotations[0]
-        category: Category = annotation.category
+        annotation: ObjDetAnnotation = next(dataset.annotations)
+        category: ObjDetCategory = annotation.category
 
         assert annotation.category_id == category.id
         assert category.name == "Nutritions"
 
     def test_image_reference(self):
-        dataset: COCO = COCO(annotation_file=Fixtures.food_nutritions.value)
+        dataset: ObjectDetectionDataset = ObjectDetectionDataset(
+            annotation_file=Fixtures.food_nutritions.value
+        )
 
-        annotation: Annotation = dataset.annotations[0]
+        annotation: ObjDetAnnotation = next(dataset.annotations)
         image: Image = annotation.image
 
         assert annotation.image_id == image.id

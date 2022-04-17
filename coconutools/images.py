@@ -1,87 +1,41 @@
-from dataclasses import dataclass
-from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from __future__ import annotations
 
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel
+
+from coconutools.dataset import BaseCOCO
 from coconutools.exceptions import DatasetNotReferenced
 
-if TYPE_CHECKING:
-    from coconutools.dataset import COCO
 
-
-@dataclass
-class License:
+class License(BaseModel):
     """
     Image Licence
     """
+
+    __slots__ = (
+        "id",
+        "name",
+        "url",
+    )
 
     id: int
     name: str
     url: str
 
 
-@dataclass(init=False)
-class Category:
-    """
-    Image Category
-    """
-
-    __slots__ = ("id", "name", "supercategory")
-
-    id: int
-    name: str
-    supercategory: Optional[str]
-
-    def __init__(self, id: int, name: str, supercategory: Optional[str] = None) -> None:
-        self.id = id
-        self.name = name
-        self.supercategory = supercategory
-
-
-@dataclass(init=False)
-class Image:
-    __slots__ = (
-        "id",
-        "file_name",
-        "width",
-        "height",
-        "coco_url",
-        "flickr_url",
-        "date_captured",
-        "license_id",
-        "_dataset",
-    )
-
+class Image(BaseModel):
     id: int
     file_name: str
     width: int
     height: int
-    coco_url: Optional[str]
-    flickr_url: Optional[str]
-    date_captured: Optional[datetime]
-    license_id: Optional[int]
+    coco_url: str | None
+    flickr_url: str | None
+    date_captured: datetime | None
+    license_id: int | None
 
-    def __init__(
-        self,
-        id: int,
-        file_name: str,
-        width: int,
-        height: int,
-        coco_url: Optional[str] = None,
-        flickr_url: Optional[str] = None,
-        date_captured: Optional[datetime] = None,
-        license: Optional[int] = None,
-        dataset: Optional["COCO"] = None,
-    ) -> None:
-        self._dataset: Optional["COCO"] = dataset
-
-        self.id = id
-        self.file_name = file_name
-        self.width = width
-        self.height = height
-        self.coco_url = coco_url
-        self.flickr_url = flickr_url
-        self.date_captured = date_captured
-        self.license_id = license
+    _dataset: BaseCOCO
 
     @property
     def license(self) -> Optional[License]:
