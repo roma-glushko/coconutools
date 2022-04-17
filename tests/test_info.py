@@ -2,7 +2,7 @@ from os import PathLike
 
 import pytest
 
-from coconutools import COCO, Info
+from coconutools import Info, ObjectDetectionDataset
 from tests.fixtures import Fixtures
 
 
@@ -29,7 +29,9 @@ class TestDatasetInfoLoading:
         url: str,
         contributor: str,
     ) -> None:
-        dataset = COCO(annotation_file=dataset_path)
+        dataset: ObjectDetectionDataset = ObjectDetectionDataset(
+            annotation_file=dataset_path
+        )
 
         dataset_info: Info = dataset.info
 

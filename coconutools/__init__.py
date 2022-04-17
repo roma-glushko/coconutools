@@ -1,12 +1,17 @@
-from coconutools.annotations import Annotation
-from coconutools.dataset import COCO, Info
-from coconutools.images import Category, Image, License
+from coconutools.annotations.object_detection import (
+    ObjDetAnnotation,
+    ObjDetCategory,
+    ObjectDetectionDataset,
+)
+from coconutools.dataset import BaseCOCO, Info
+from coconutools.images import Image, License
 
 __all__ = (
-    "COCO",
+    "BaseCOCO",
     "Image",
-    "Category",
     "Info",
     "License",
-    "Annotation",
+    "ObjDetCategory",
+    "ObjDetAnnotation",
+    "ObjectDetectionDataset",
 )

@@ -6,12 +6,13 @@ authors = ["Roman Glushko <roman.glushko.m@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4.0"
+python = ">=3.10,<4.0"
 numpy = "^1.22.0"
+pydantic = "^1.9.0"
 
 [tool.poetry.dev-dependencies]
 isort = "^5.10.1"
-black = "^21.12b0"
+black = "22.3.0"
 flake8 = "^4.0.1"
 mypy = "^0.930"
 pytest = "^6.2.5"
